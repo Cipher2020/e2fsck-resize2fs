@@ -8,13 +8,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install cross compiler
+      - name: Prepare build environment
         run: |
           sudo apt update
-          sudo apt install -y aarch64-linux-musl-gcc make wget tar
+          sudo apt install -y make wget tar curl
+
+          # 下载官方musl交叉编译器 (aarch64)
+          wget https://musl.cc/aarch64-linux-musl-cross.tgz
+          tar -xf aarch64-linux-musl-cross.tgz
+          sudo mv aarch64-linux-musl-cross /opt/
+          echo "/opt/aarch64-linux-musl-cross/bin" >> $GITHUB_PATH
 
       - name: Build e2fsprogs 1.46.5
         run: |
+          export CC=aarch64-linux-musl-gcc
+          export CXX=aarch64-linux-musl-g++
           wget https://github.com/tytso/e2fsprogs/archive/refs/tags/v1.46.5.tar.gz
           tar -xf v1.46.5.tar.gz
           cd e2fsprogs-1.46.5
@@ -26,6 +34,8 @@ jobs:
 
       - name: Build parted-3.3
         run: |
+          export CC=aarch64-linux-musl-gcc
+          export CXX=aarch64-linux-musl-g++
           export CFLAGS="-Wno-implicit-function-declaration"
           wget https://ftp.gnu.org/gnu/parted/parted-3.3.tar.xz
           tar -xf parted-3.3.tar.xz
